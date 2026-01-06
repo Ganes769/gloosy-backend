@@ -22,11 +22,17 @@ const envSchema = z.object({
 
   APP_STAGE: z.enum(["dev", "test", "production"]).default("dev"),
 
-  PORT: z.coerce.number().positive().default(3000),
+  PORT: z.coerce.number().positive().default(5000),
   JWT_SECRET: z.string().min(32, "Must be 32 chars long"),
   JWT_EXPIRES_IN: z.string().default("7d"),
   BCRYPT_ROUNDS: z.coerce.number().min(10).max(20).default(12),
   DB_URL: z.string().url(),
+  // Google OAuth credentials (optional - for token verification)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string(),
+  CLOUDINARY_API_KEY: z.string(),
+  CLOUDINARY_API_SECRET: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;

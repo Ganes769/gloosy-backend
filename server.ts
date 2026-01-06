@@ -1,16 +1,27 @@
 import express from "express";
-import connectDB from "./src/config/db.ts";
-import { authRoutes } from "./src/routes/authRoutes.ts";
+import authRoutes from "./src/routes/authRoutes.ts";
+import cors from "cors";
+import { userProfileRoutes } from "./src/routes/userProfileRoutes.ts";
 const app = express();
-connectDB();
 
-// Middleware to parse JSON request bodies
+// Middleware
+app.use(
+  cors({
+    origin: true, // Allow all origins in development
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("hello");
 });
 app.use("/api/auth", authRoutes);
-
+app.use("/profile", userProfileRoutes);
+app.use((req, res) => {
+  res.status(404).json({ message: "route not found" });
+});
 export { app };
 export default app;
