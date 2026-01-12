@@ -14,7 +14,7 @@ const router = Router();
 router.use(authencitatedToken);
 
 export const userProfileRoutes = router.post(
-  "/updateProfile",
+  "/",
   validateBody(userProfileUpdateScehma),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
