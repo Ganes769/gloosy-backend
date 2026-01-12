@@ -27,7 +27,7 @@
   "license": "ISC",
   "dependencies": {
     "@epic-web/remember": "^1.1.0",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "custom-env": "^2.0.6",
@@ -50,7 +50,7 @@
     "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.25",
     "@types/jest": "^29.5.14",
