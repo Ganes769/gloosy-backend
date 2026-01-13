@@ -25,6 +25,3 @@ export const getUserId = async (
     return res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };
-
-
-

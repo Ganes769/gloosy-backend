@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     experience: { type: Number, min: 1 },
   },
   {
-    versionKey: false, // ✅ removes "__v"
+    versionKey: false,
   }
 );
 

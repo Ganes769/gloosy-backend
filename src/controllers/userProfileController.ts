@@ -49,11 +49,11 @@ const handleProfilePictureUpload = async (
     });
     return uploaded.secure_url;
   }
-  
+
   if (existingProfilePicture) {
     return existingProfilePicture;
   }
-  
+
   throw new Error("Profile picture is required");
 };
 
@@ -66,7 +66,7 @@ const buildProfileUpdateData = (
 ): ProfileUpdateData => {
   // Auto-generate userName from firstName + lastName
   const generatedUserName = `${body.firstName} ${body.lastName}`.trim();
-  
+
   return {
     firstName: body.firstName,
     lastName: body.lastName,
@@ -86,32 +86,44 @@ const buildUserUpdateData = (
   profileData: ProfileUpdateData
 ): Partial<ProfileUpdateData> => {
   const userUpdateData: Partial<ProfileUpdateData> = {};
-  
+
   if (profileData.firstName !== undefined && profileData.firstName !== null) {
     userUpdateData.firstName = profileData.firstName;
   }
   if (profileData.lastName !== undefined && profileData.lastName !== null) {
     userUpdateData.lastName = profileData.lastName;
   }
-  if (profileData.dateOfBirth !== undefined && profileData.dateOfBirth !== null) {
+  if (
+    profileData.dateOfBirth !== undefined &&
+    profileData.dateOfBirth !== null
+  ) {
     userUpdateData.dateOfBirth = profileData.dateOfBirth;
   }
   if (profileData.userName !== undefined && profileData.userName !== null) {
     userUpdateData.userName = profileData.userName;
   }
-  if (profileData.description !== undefined && profileData.description !== null) {
+  if (
+    profileData.description !== undefined &&
+    profileData.description !== null
+  ) {
     userUpdateData.description = profileData.description;
   }
-  if (profileData.primarySkill !== undefined && profileData.primarySkill !== null) {
+  if (
+    profileData.primarySkill !== undefined &&
+    profileData.primarySkill !== null
+  ) {
     userUpdateData.primarySkill = profileData.primarySkill;
   }
   if (profileData.experience !== undefined && profileData.experience !== null) {
     userUpdateData.experience = profileData.experience;
   }
-  if (profileData.profilePicture !== undefined && profileData.profilePicture !== null) {
+  if (
+    profileData.profilePicture !== undefined &&
+    profileData.profilePicture !== null
+  ) {
     userUpdateData.profilePicture = profileData.profilePicture;
   }
-  
+
   return userUpdateData;
 };
 
@@ -124,11 +136,11 @@ export const updateUserProfileController = async (
 ): Promise<Response> => {
   try {
     const userId = req.user?.id;
-    
+
     if (!userId) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: "Unauthorized",
-        message: "User ID not found in token" 
+        message: "User ID not found in token",
       });
     }
 
@@ -146,12 +158,18 @@ export const updateUserProfileController = async (
     } catch (error) {
       return res.status(400).json({
         error: "Profile picture required",
-        message: error instanceof Error ? error.message : "Profile picture is required",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Profile picture is required",
       });
     }
 
     // Build profile update data
-    const profileUpdateData = buildProfileUpdateData(updateBody, profilePictureUrl);
+    const profileUpdateData = buildProfileUpdateData(
+      updateBody,
+      profilePictureUrl
+    );
 
     // Update or create user profile
     const userProfile = await userProfileSchema.findOneAndUpdate(
@@ -176,7 +194,7 @@ export const updateUserProfileController = async (
 
     // Sync profile data to User collection (including dateOfBirth, description, experience, primarySkill)
     const userUpdateData = buildUserUpdateData(profileUpdateData);
-    
+
     if (Object.keys(userUpdateData).length > 0) {
       try {
         await userSchema.findByIdAndUpdate(
@@ -189,7 +207,10 @@ export const updateUserProfileController = async (
         // The profile was successfully updated
         if (error instanceof mongoose.Error.ValidationError) {
           console.error("Validation error updating User collection:", error);
-        } else if (error instanceof mongoose.Error && (error as any).code === 11000) {
+        } else if (
+          error instanceof mongoose.Error &&
+          (error as any).code === 11000
+        ) {
           console.error("Duplicate key error updating User collection:", error);
         } else {
           console.error("Error syncing to User collection:", error);
@@ -227,8 +248,8 @@ export const updateUserProfileController = async (
 
     return res.status(500).json({
       error: "Internal server error",
-      message: error instanceof Error ? error.message : "Unknown error occurred",
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 };
-
