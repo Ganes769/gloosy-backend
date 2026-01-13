@@ -76,22 +76,6 @@ export const registerController = async (req: Request, res: Response) => {
       });
     }
 
-    if (error instanceof mongoose.Error && (error as any).code === 11000) {
-      const field = Object.keys((error as any).keyPattern)[0];
-      let message = "";
-      if (field === "userName") {
-        message = "username already exists";
-      } else if (field === "email") {
-        message = "email already exists";
-      } else {
-        message = `${field} already exists`;
-      }
-      return res.status(409).json({
-        error: "Duplicate entry",
-        message: message,
-      });
-    }
-
     res.status(500).json({ message: "server error" });
   }
 };
