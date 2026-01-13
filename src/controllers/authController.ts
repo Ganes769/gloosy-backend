@@ -30,18 +30,20 @@ export const loginController = async (req: Request, res: Response) => {
 export const registerController = async (req: Request, res: Response) => {
   try {
     const { role, email, password, firstName, lastName } = req.body;
+
+    // Generate username (same logic as pre-save hook)
     const userName = `${firstName} ${lastName}`.trim();
+
     const existingEmail = await userSchema.findOne({ email });
     if (existingEmail) {
       return res.status(409).json({
-        error: "Duplicate entry",
         message: "Email already exists",
       });
     }
+
     const existingUsername = await userSchema.findOne({ userName });
     if (existingUsername) {
       return res.status(409).json({
-        error: "Duplicate entry",
         message: "Username already exists",
       });
     }
