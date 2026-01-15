@@ -21,3 +21,18 @@ export function uploadBufferToCloudinary(
     stream.end(buffer);
   });
 }
+
+/**
+ * Converts a base64 string or data URL to a Buffer
+ * Handles both formats:
+ * - "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+ * - "/9j/4AAQSkZJRg..." (just the base64 part)
+ */
+export function base64ToBuffer(base64String: string): Buffer {
+  // Remove data URL prefix if present (e.g., "data:image/jpeg;base64,")
+  const base64Data = base64String.includes(",")
+    ? base64String.split(",")[1]
+    : base64String;
+
+  return Buffer.from(base64Data, "base64");
+}

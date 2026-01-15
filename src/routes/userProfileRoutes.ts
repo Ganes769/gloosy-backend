@@ -6,7 +6,10 @@ import {
 } from "../middleware/auth.ts";
 import { validateBody } from "../middleware/validateBody.ts";
 import { userProfileUpdateScehma } from "../schemas/userRegisterInput.ts";
-import { uploadBufferToCloudinary } from "../utils/uploadToCloudinary.ts";
+import {
+  uploadBufferToCloudinary,
+  base64ToBuffer,
+} from "../utils/uploadToCloudinary.ts";
 import { upload } from "../middleware/photoUpload.ts";
 import UserProfile from "../model/userProfileSchema.ts";
 import User from "../model/userSchema.ts";
@@ -30,6 +33,7 @@ export const userProfileRoutes = router.post(
         description,
         primarySkill,
         experience,
+        profilePicture, // Can be a base64 string or data URL
       } = req.body;
 
       // Auto-generate userName from firstName + lastName
@@ -65,18 +69,18 @@ export const userProfileRoutes = router.post(
         if (!Number.isNaN(d.getTime())) updateData.dateOfBirth = d;
       }
 
-      // ✅ Upload profile picture to Cloudinary if provided
-      // Profile picture must be uploaded as a file (not URL in body)
+      // ✅ Upload profile picture to Cloudinary FIRST if provided
+      // Priority: 1) File upload (multer) > 2) Base64 string in body
       let profilePictureUrl: string | undefined;
 
       if (req.file?.buffer) {
+        // Handle file upload via multer
         try {
           const uploaded = await uploadBufferToCloudinary(req.file.buffer, {
             folder: "profile-pictures",
             public_id: `user_${userId}`,
           });
           profilePictureUrl = uploaded.secure_url;
-          updateData.profilePicture = profilePictureUrl;
         } catch (error) {
           return res.status(400).json({
             error: "Upload failed",
@@ -86,6 +90,38 @@ export const userProfileRoutes = router.post(
                 : "Failed to upload profile picture to Cloudinary",
           });
         }
+      } else if (profilePicture && typeof profilePicture === "string") {
+        // Handle base64 string or data URL from request body
+        try {
+          // Check if it's already a URL (don't re-upload)
+          if (
+            profilePicture.startsWith("http://") ||
+            profilePicture.startsWith("https://")
+          ) {
+            profilePictureUrl = profilePicture;
+          } else {
+            // Convert base64 to buffer and upload to Cloudinary
+            const imageBuffer = base64ToBuffer(profilePicture);
+            const uploaded = await uploadBufferToCloudinary(imageBuffer, {
+              folder: "profile-pictures",
+              public_id: `user_${userId}`,
+            });
+            profilePictureUrl = uploaded.secure_url;
+          }
+        } catch (error) {
+          return res.status(400).json({
+            error: "Upload failed",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Failed to upload profile picture to Cloudinary",
+          });
+        }
+      }
+
+      // Add profile picture URL to update data if we have one
+      if (profilePictureUrl) {
+        updateData.profilePicture = profilePictureUrl;
       }
 
       // ✅ prevent empty upsert inserting just _id
