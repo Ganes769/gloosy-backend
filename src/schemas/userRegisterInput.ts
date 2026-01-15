@@ -41,7 +41,7 @@ export const userProfileUpdateScehma = z.object({
   dateOfBirth: z.coerce.date(),
   userName: z.string().optional(), // Optional - auto-generated from firstName + lastName
   description: z.string().min(1, "Description is required"),
-  profilePicture: z.string().min(1, "Profile picture is required").optional(), // Optional if uploaded as file
+  // profilePicture is not in body - it must be uploaded as a file via multipart/form-data
   primarySkill: z.enum(["Video creation", "Photo Creation"]),
-  experience: z.number().min(1, "Experience is required"),
+  experience: z.coerce.number().min(1, "Experience is required"),
 });

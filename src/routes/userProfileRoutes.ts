@@ -7,6 +7,7 @@ import {
 import { validateBody } from "../middleware/validateBody.ts";
 import { userProfileUpdateScehma } from "../schemas/userRegisterInput.ts";
 import { uploadBufferToCloudinary } from "../utils/uploadToCloudinary.ts";
+import { upload } from "../middleware/photoUpload.ts";
 import UserProfile from "../model/userProfileSchema.ts";
 import User from "../model/userSchema.ts";
 
@@ -15,6 +16,7 @@ router.use(authencitatedToken);
 
 export const userProfileRoutes = router.post(
   "/",
+  upload.single("profilePicture"),
   validateBody(userProfileUpdateScehma),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -26,7 +28,6 @@ export const userProfileRoutes = router.post(
         lastName,
         dateOfBirth,
         description,
-        profilePicture,
         primarySkill,
         experience,
       } = req.body;
@@ -64,20 +65,28 @@ export const userProfileRoutes = router.post(
         if (!Number.isNaN(d.getTime())) updateData.dateOfBirth = d;
       }
 
-      // ✅ upload image if provided
+      // ✅ Upload profile picture to Cloudinary if provided
+      // Profile picture must be uploaded as a file (not URL in body)
       let profilePictureUrl: string | undefined;
 
       if (req.file?.buffer) {
-        const uploaded = await uploadBufferToCloudinary(req.file.buffer, {
-          folder: "profile-pictures",
-          public_id: `user_${userId}`,
-        });
-        profilePictureUrl = uploaded.secure_url;
+        try {
+          const uploaded = await uploadBufferToCloudinary(req.file.buffer, {
+            folder: "profile-pictures",
+            public_id: `user_${userId}`,
+          });
+          profilePictureUrl = uploaded.secure_url;
+          updateData.profilePicture = profilePictureUrl;
+        } catch (error) {
+          return res.status(400).json({
+            error: "Upload failed",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Failed to upload profile picture to Cloudinary",
+          });
+        }
       }
-
-      if (profilePictureUrl) updateData.profilePicture = profilePictureUrl;
-      else if (profilePicture !== undefined)
-        updateData.profilePicture = profilePicture;
 
       // ✅ prevent empty upsert inserting just _id
       if (Object.keys(updateData).length === 0) {
@@ -112,9 +121,9 @@ export const userProfileRoutes = router.post(
         const num = Number(experience);
         if (!Number.isNaN(num)) userUpdateData.experience = num;
       }
-      if (profilePictureUrl) userUpdateData.profilePicture = profilePictureUrl;
-      else if (profilePicture !== undefined)
-        userUpdateData.profilePicture = profilePicture;
+      if (profilePictureUrl) {
+        userUpdateData.profilePicture = profilePictureUrl;
+      }
 
       if (Object.keys(userUpdateData).length > 0) {
         await User.findByIdAndUpdate(
