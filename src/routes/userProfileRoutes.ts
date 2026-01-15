@@ -17,9 +17,19 @@ import User from "../model/userSchema.ts";
 const router = Router();
 router.use(authencitatedToken);
 
+// Middleware to conditionally use multer only for multipart/form-data
+const conditionalMulter = (req: any, res: any, next: any) => {
+  const contentType = req.headers["content-type"] || "";
+  if (contentType.includes("multipart/form-data")) {
+    return upload.single("profilePicture")(req, res, next);
+  }
+  // Skip multer for JSON requests
+  next();
+};
+
 export const userProfileRoutes = router.post(
   "/",
-  upload.single("profilePicture"),
+  conditionalMulter,
   validateBody(userProfileUpdateScehma),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -35,6 +45,20 @@ export const userProfileRoutes = router.post(
         experience,
         profilePicture, // Can be a base64 string or data URL
       } = req.body;
+
+      // Debug logging
+      console.log("Request content-type:", req.headers["content-type"]);
+      console.log("Has file:", !!req.file);
+      console.log(
+        "Profile picture type:",
+        profilePicture ? typeof profilePicture : "undefined"
+      );
+      console.log(
+        "Profile picture preview:",
+        profilePicture
+          ? profilePicture.substring(0, 50) + "..."
+          : "not provided"
+      );
 
       // Auto-generate userName from firstName + lastName
       let generatedUserName: string | undefined;
@@ -82,12 +106,14 @@ export const userProfileRoutes = router.post(
           });
           profilePictureUrl = uploaded.secure_url;
         } catch (error) {
+          console.error("File upload error:", error);
           return res.status(400).json({
             error: "Upload failed",
             message:
               error instanceof Error
                 ? error.message
                 : "Failed to upload profile picture to Cloudinary",
+            details: error instanceof Error ? error.stack : undefined,
           });
         }
       } else if (profilePicture && typeof profilePicture === "string") {
@@ -100,8 +126,31 @@ export const userProfileRoutes = router.post(
           ) {
             profilePictureUrl = profilePicture;
           } else {
+            // Validate base64 string
+            if (!profilePicture || profilePicture.trim().length === 0) {
+              throw new Error("Profile picture base64 string is empty");
+            }
+
             // Convert base64 to buffer and upload to Cloudinary
-            const imageBuffer = base64ToBuffer(profilePicture);
+            let imageBuffer: Buffer;
+            try {
+              imageBuffer = base64ToBuffer(profilePicture);
+              if (imageBuffer.length === 0) {
+                throw new Error(
+                  "Invalid base64 string: resulted in empty buffer"
+                );
+              }
+            } catch (bufferError) {
+              console.error("Error converting base64 to buffer:", bufferError);
+              throw new Error(
+                `Invalid base64 image format: ${
+                  bufferError instanceof Error
+                    ? bufferError.message
+                    : "Unknown error"
+                }`
+              );
+            }
+
             const uploaded = await uploadBufferToCloudinary(imageBuffer, {
               folder: "profile-pictures",
               public_id: `user_${userId}`,
@@ -109,12 +158,14 @@ export const userProfileRoutes = router.post(
             profilePictureUrl = uploaded.secure_url;
           }
         } catch (error) {
+          console.error("Profile picture upload error:", error);
           return res.status(400).json({
             error: "Upload failed",
             message:
               error instanceof Error
                 ? error.message
                 : "Failed to upload profile picture to Cloudinary",
+            details: error instanceof Error ? error.stack : undefined,
           });
         }
       }
