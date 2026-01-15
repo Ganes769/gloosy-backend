@@ -24,7 +24,7 @@ const fileUploadMiddleware = (req: any, res: any, next: any) => {
   next();
 };
 
-export const userProfileRoutes = router.post(
+export const userProfileRoutes = router.put(
   "/",
   fileUploadMiddleware,
   validateBody(userProfileUpdateScehma),

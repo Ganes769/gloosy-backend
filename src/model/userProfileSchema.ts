@@ -16,7 +16,6 @@ const userProfileSchema = new mongoose.Schema(
     experience: { type: Number, min: 1 },
   },
   {
-    versionKey: false, // ✅ removes "__v"
     timestamps: true,
   }
 );
