@@ -127,9 +127,6 @@ const buildUserUpdateData = (
   return userUpdateData;
 };
 
-/**
- * Updates user profile in both UserProfile and User collections
- */
 export const updateUserProfileController = async (
   req: AuthenticatedRequest<UserProfileUpdateBody>,
   res: Response
@@ -246,6 +243,50 @@ export const updateUserProfileController = async (
       });
     }
 
+    return res.status(500).json({
+      error: "Internal server error",
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
+    });
+  }
+};
+
+/**
+ * Retrieves the current authenticated user's information
+ */
+export const getCurrentUserController = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "User ID not found in token",
+      });
+    }
+
+    const user = await userSchema.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        error: "Not found",
+        message: "User not found",
+      });
+    }
+
+    const userProfile = await userProfileSchema.findById(userId);
+
+    const userData = {
+      ...user.toObject(),
+      ...(userProfile && userProfile.toObject()),
+    };
+
+    return res.status(200).json(userData);
+  } catch (error) {
+    console.error("Error retrieving user:", error);
     return res.status(500).json({
       error: "Internal server error",
       message:
