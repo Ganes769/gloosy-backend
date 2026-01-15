@@ -4,11 +4,14 @@ import { ZodError, type ZodSchema } from "zod";
 export const validateBody = (schema: ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Log the incoming body for debugging
+      console.log("Validation - Request body:", JSON.stringify(req.body, null, 2));
       const validatedData = schema.parse(req.body);
       req.body = validatedData;
       next();
     } catch (e) {
       if (e instanceof ZodError) {
+        console.error("Validation error:", e.issues);
         return res.status(400).json({
           error: "validation error",
           details: e.issues.map((err) => ({

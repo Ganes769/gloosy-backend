@@ -13,7 +13,10 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+// Parse JSON bodies
 app.use(express.json());
+// Parse URL-encoded bodies (for form data)
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send("hello");

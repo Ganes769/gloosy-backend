@@ -49,6 +49,14 @@ export const userProfileRoutes = router.post(
       // Debug logging
       console.log("Request content-type:", req.headers["content-type"]);
       console.log("Has file:", !!req.file);
+      console.log("File details:", {
+        fieldname: req.file?.fieldname,
+        originalname: req.file?.originalname,
+        mimetype: req.file?.mimetype,
+        size: req.file?.size,
+        hasBuffer: !!req.file?.buffer,
+        bufferLength: req.file?.buffer?.length,
+      });
       console.log(
         "Profile picture type:",
         profilePicture ? typeof profilePicture : "undefined"
@@ -99,21 +107,31 @@ export const userProfileRoutes = router.post(
 
       if (req.file?.buffer) {
         // Handle file upload via multer
+        console.log("📤 Starting Cloudinary upload...");
+        console.log("File size:", req.file.buffer.length, "bytes");
+        console.log("File mimetype:", req.file.mimetype);
         try {
           const uploaded = await uploadBufferToCloudinary(req.file.buffer, {
             folder: "profile-pictures",
             public_id: `user_${userId}`,
           });
           profilePictureUrl = uploaded.secure_url;
+          console.log("✅ Cloudinary upload successful:", profilePictureUrl);
         } catch (error) {
-          console.error("File upload error:", error);
+          console.error("❌ File upload error:", error);
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to upload profile picture to Cloudinary";
           return res.status(400).json({
             error: "Upload failed",
-            message:
-              error instanceof Error
-                ? error.message
-                : "Failed to upload profile picture to Cloudinary",
-            details: error instanceof Error ? error.stack : undefined,
+            message: errorMessage,
+            details: [
+              {
+                field: "profilePicture",
+                message: errorMessage,
+              },
+            ],
           });
         }
       } else if (profilePicture && typeof profilePicture === "string") {
@@ -159,13 +177,19 @@ export const userProfileRoutes = router.post(
           }
         } catch (error) {
           console.error("Profile picture upload error:", error);
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to upload profile picture to Cloudinary";
           return res.status(400).json({
             error: "Upload failed",
-            message:
-              error instanceof Error
-                ? error.message
-                : "Failed to upload profile picture to Cloudinary",
-            details: error instanceof Error ? error.stack : undefined,
+            message: errorMessage,
+            details: [
+              {
+                field: "profilePicture",
+                message: errorMessage,
+              },
+            ],
           });
         }
       }

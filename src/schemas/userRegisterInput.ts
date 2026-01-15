@@ -38,10 +38,29 @@ export const userProfileUpdateScehma = z.object({
   userid: z.string().optional(), // Optional since we get it from authenticated token
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  dateOfBirth: z.coerce.date(),
+  dateOfBirth: z.preprocess(
+    (val) => {
+      if (typeof val === "string") {
+        const date = new Date(val);
+        return isNaN(date.getTime()) ? val : date;
+      }
+      return val;
+    },
+    z.date({ message: "Invalid date format for dateOfBirth" })
+  ),
   userName: z.string().optional(), // Optional - auto-generated from firstName + lastName
   description: z.string().min(1, "Description is required"),
-  // profilePicture is not in body - it must be uploaded as a file via multipart/form-data
+  profilePicture: z.string().optional(), // Optional - can be base64 string or will come as file
+  // profilePicture file upload is handled separately via multipart/form-data
   primarySkill: z.enum(["Video creation", "Photo Creation"]),
-  experience: z.coerce.number().min(1, "Experience is required"),
+  experience: z.preprocess(
+    (val) => {
+      if (typeof val === "string") {
+        const num = Number(val);
+        return isNaN(num) ? val : num;
+      }
+      return val;
+    },
+    z.number().min(1, "Experience must be a number >= 1")
+  ),
 });
