@@ -11,8 +11,22 @@ export function uploadBufferToCloudinary(
     }
 
     // Validate Cloudinary config
-    if (!process.env.CLOUDINARY_CLOUD_NAME) {
-      return reject(new Error("Cloudinary cloud name not configured"));
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      const missing = [];
+      if (!cloudName) missing.push("CLOUDINARY_CLOUD_NAME");
+      if (!apiKey) missing.push("CLOUDINARY_API_KEY");
+      if (!apiSecret) missing.push("CLOUDINARY_API_SECRET");
+      
+      return reject(
+        new Error(
+          `Cloudinary credentials not configured. Missing: ${missing.join(", ")}. ` +
+          "Please check your environment variables."
+        )
+      );
     }
 
     const stream = cloudinary.uploader.upload_stream(
@@ -23,17 +37,31 @@ export function uploadBufferToCloudinary(
       },
       (error, result) => {
         if (error) {
+          const httpCode = (error as any).http_code;
+          const errorMessage = error.message;
+          
           console.error("Cloudinary upload error:", {
-            message: error.message,
-            http_code: (error as any).http_code,
+            message: errorMessage,
+            http_code: httpCode,
             name: error.name,
           });
+
+          // Provide helpful error messages for common issues
+          if (httpCode === 401) {
+            return reject(
+              new Error(
+                `Cloudinary authentication failed (HTTP 401). ` +
+                `This usually means your CLOUDINARY_API_SECRET is incorrect or missing. ` +
+                `Please verify your Cloudinary credentials in your environment variables. ` +
+                `Original error: ${errorMessage}`
+              )
+            );
+          }
+
           return reject(
             new Error(
-              `Cloudinary upload failed: ${error.message}${
-                (error as any).http_code
-                  ? ` (HTTP ${(error as any).http_code})`
-                  : ""
+              `Cloudinary upload failed: ${errorMessage}${
+                httpCode ? ` (HTTP ${httpCode})` : ""
               }`
             )
           );
