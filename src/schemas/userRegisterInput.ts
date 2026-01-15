@@ -38,29 +38,22 @@ export const userProfileUpdateScehma = z.object({
   userid: z.string().optional(), // Optional since we get it from authenticated token
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  dateOfBirth: z.preprocess(
-    (val) => {
-      if (typeof val === "string") {
-        const date = new Date(val);
-        return isNaN(date.getTime()) ? val : date;
-      }
-      return val;
-    },
-    z.date({ message: "Invalid date format for dateOfBirth" })
-  ),
+  dateOfBirth: z.preprocess((val) => {
+    if (typeof val === "string") {
+      const date = new Date(val);
+      return isNaN(date.getTime()) ? val : date;
+    }
+    return val;
+  }, z.date({ message: "Invalid date format for dateOfBirth" })),
   userName: z.string().optional(), // Optional - auto-generated from firstName + lastName
   description: z.string().min(1, "Description is required"),
-  profilePicture: z.string().optional(), // Optional - can be base64 string or will come as file
-  // profilePicture file upload is handled separately via multipart/form-data
+  // profilePicture is handled as file upload via multipart/form-data, not in body
   primarySkill: z.enum(["Video creation", "Photo Creation"]),
-  experience: z.preprocess(
-    (val) => {
-      if (typeof val === "string") {
-        const num = Number(val);
-        return isNaN(num) ? val : num;
-      }
-      return val;
-    },
-    z.number().min(1, "Experience must be a number >= 1")
-  ),
+  experience: z.preprocess((val) => {
+    if (typeof val === "string") {
+      const num = Number(val);
+      return isNaN(num) ? val : num;
+    }
+    return val;
+  }, z.number().min(1, "Experience must be a number >= 1")),
 });
