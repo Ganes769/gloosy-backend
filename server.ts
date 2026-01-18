@@ -6,18 +6,16 @@ import { authencitatedToken } from "./src/middleware/auth.ts";
 import { getCurrentUserController } from "./src/controllers/userProfileController.ts";
 const app = express();
 
-// Middleware
 app.use(
   cors({
-    origin: true, // Allow all origins in development
+    origin: true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-// Parse JSON bodies
+
 app.use(express.json());
-// Parse URL-encoded bodies (for form data)
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {

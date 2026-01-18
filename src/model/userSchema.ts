@@ -27,4 +27,16 @@ userSchema.pre("save", async function () {
   }
 });
 
+// Virtual populate to access UserProfile from User
+userSchema.virtual("profile", {
+  ref: "UserProfile",
+  localField: "_id",
+  foreignField: "user",
+  justOne: true,
+});
+
+// Ensure virtual fields are serialized
+userSchema.set("toJSON", { virtuals: true });
+userSchema.set("toObject", { virtuals: true });
+
 export default mongoose.model("User", userSchema);

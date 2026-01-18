@@ -168,12 +168,15 @@ export const updateUserProfileController = async (
       profilePictureUrl
     );
 
+    // Convert userId string to ObjectId for the reference
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
     // Update or create user profile
     const userProfile = await userProfileSchema.findOneAndUpdate(
-      { _id: userId },
+      { user: userObjectId },
       {
         $set: profileUpdateData,
-        $setOnInsert: { _id: userId },
+        $setOnInsert: { user: userObjectId },
       },
       {
         new: true,
@@ -268,6 +271,7 @@ export const getCurrentUserController = async (
       });
     }
 
+    // Get user data
     const user = await userSchema.findById(userId).select("-password");
 
     if (!user) {
@@ -277,8 +281,11 @@ export const getCurrentUserController = async (
       });
     }
 
-    const userProfile = await userProfileSchema.findById(userId);
+    // Get user profile using the user reference
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const userProfile = await userProfileSchema.findOne({ user: userObjectId });
 
+    // Combine user data with profile data
     const userData = {
       ...user.toObject(),
       ...(userProfile && userProfile.toObject()),

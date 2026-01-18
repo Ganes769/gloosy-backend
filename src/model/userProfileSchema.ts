@@ -2,7 +2,12 @@ import mongoose from "mongoose";
 
 const userProfileSchema = new mongoose.Schema(
   {
-    _id: { type: String, required: true }, // userId as string
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
     firstName: { type: String },
     lastName: { type: String },
     dateOfBirth: { type: Date },
@@ -19,6 +24,9 @@ const userProfileSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Add index on user field for better query performance
+userProfileSchema.index({ user: 1 });
 
 // Auto-generate userName from firstName + lastName before saving
 userProfileSchema.pre("save", async function () {

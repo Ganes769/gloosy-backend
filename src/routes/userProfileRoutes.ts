@@ -10,6 +10,7 @@ import { uploadBufferToCloudinary } from "../utils/uploadToCloudinary.ts";
 import { upload } from "../middleware/photoUpload.ts";
 import UserProfile from "../model/userProfileSchema.ts";
 import User from "../model/userSchema.ts";
+import mongoose from "mongoose";
 
 const router = Router();
 router.use(authencitatedToken);
@@ -114,14 +115,20 @@ export const userProfileRoutes = router.put(
         updateData.profilePicture = profilePictureUrl;
       }
 
-      // ✅ prevent empty upsert inserting just _id
+      // ✅ prevent empty upsert inserting just user reference
       if (Object.keys(updateData).length === 0) {
         return res.status(400).json({ error: "No fields provided to update." });
       }
 
+      // Convert userId string to ObjectId for the reference
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+
       const userProfile = await UserProfile.findOneAndUpdate(
-        { _id: userId },
-        { $set: updateData },
+        { user: userObjectId },
+        { 
+          $set: updateData,
+          $setOnInsert: { user: userObjectId },
+        },
         {
           new: true,
           upsert: true,
