@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const userProfileSchema = new mongoose.Schema(
+export const userProfileSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -22,7 +22,7 @@ const userProfileSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Add index on user field for better query performance
