@@ -30,8 +30,6 @@ export const loginController = async (req: Request, res: Response) => {
 export const registerController = async (req: Request, res: Response) => {
   try {
     const { role, email, password, firstName, lastName } = req.body;
-
-    // Generate username (same logic as pre-save hook)
     const userName = `${firstName} ${lastName}`.trim();
 
     const existingEmail = await userSchema.findOne({ email });
