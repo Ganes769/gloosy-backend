@@ -14,7 +14,12 @@ export const getAllCreatorDetails = router.get(
       const skip = (page - 1) * limit;
 
       const [users, total] = await Promise.all([
-        userSchema.find({ role: "creator" }).skip(skip).limit(limit).lean(),
+        userSchema
+          .find({ role: "creator" })
+          .select("-password")
+          .skip(skip)
+          .limit(limit)
+          .lean(),
         userSchema.countDocuments({ role: "creator" }),
       ]);
 
